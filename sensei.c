@@ -20,30 +20,50 @@ struct Token{
   Token *next;     // next pointer
 };
 
+// input
+char *user_input;
+// token
 Token *token;
 
-void error(char *fmt, ...){
+void error(char *fmt, ...) {
   va_list ap;
-  va_start(ap,fmt);
-  vfprintf(stderr,fmt,ap);
-  fprintf(stderr,"\n");
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
   exit(1);
 }
 
-// read and go next
+void error_at(char *loc, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+
+  int pos=loc-user_input;
+  fprintf(stderr, "%s\n", user_input);
+  fprintf(stderr, "%*s", pos, ""); //print pos spaces
+  fprintf(stderr, "^ ");
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
+}
+
+// read the current token and go next
 bool consume(char op){
-  if(token->kind!=TK_RESERVED || token->str[0]!=op)return false;
+  if(token->kind!=TK_RESERVED || token->str[0]!=op) return false;
   token=token->next;
   return true;
 }
 
 void expect(char op){
-  if(token->kind!=TK_RESERVED || token->str[0]!=op) error("It isn't '%c'.", op);
+  if(token->kind!=TK_RESERVED || token->str[0]!=op){
+    error_at(token->str, "Expected '%c'", op);
+  }
   token=token->next;
 }
 
 int expect_number(){
-  if(token->kind!=TK_NUM) error("It isn't number.");
+  if(token->kind!=TK_NUM){
+    error_at(token->str, "Expected a number.");
+  }
   int val=token->val;
   token=token->next;
   return val;
@@ -65,7 +85,8 @@ Token *new_token(TokenKind kind, Token *cur, char *str){
 
 // tokenize p
 // space -> +,- -> number
-Token *tokenize(char *p){
+Token *tokenize(){
+  char *p=user_input;
   Token head;
   head.next=NULL;
   Token *cur=&head;
@@ -85,7 +106,7 @@ Token *tokenize(char *p){
       cur->val=strtol(p,&p,10);
       continue;
     }
-    error("This string can't be tokenize");
+    error_at(p, "Expected a number");
   }
 
   new_token(TK_EOF,cur,p);
@@ -94,11 +115,12 @@ Token *tokenize(char *p){
 
 int main(int argc, char ** argv){
   if(argc!= 2){
-    fprintf(stderr,"invalid number of arguments!\n");
+    fprintf(stderr,"Invalid number of arguments\n");
     return 1;
   }
 
-  token=tokenize(argv[1]);
+  user_input=argv[1];
+  token=tokenize();
 
   printf(".intel_syntax noprefix\n");
   printf(".global main \n");
