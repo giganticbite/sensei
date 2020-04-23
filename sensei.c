@@ -1,3 +1,7 @@
+//// sensei compiler
+//// C compiler made with C
+//// Ref: https://www.sigbus.info/compilerbook
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>

@@ -1,4 +1,4 @@
 ﻿# sensei
 
 ## 概要
-C complier made with C
+C compiler made with C
