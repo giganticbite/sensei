@@ -5,19 +5,37 @@
 #include <stdlib.h>
 #include <string.h>
 
+// type of token
 typedef enum{
   TK_RESERVED,
   TK_NUM,
   TK_EOF,
 } TokenKind;
 
+//type of node
+typedef enum{
+  ND_ADD,   // +
+  ND_SUB,   // -
+  ND_MUL,   // *
+  ND_DIV,   // /
+  ND_NUM,   // number
+} NodeKind;
+
 typedef struct Token Token;
+typedef struct Node Node;
 
 struct Token{
   TokenKind kind; // type of token
   int val;         // number (kind==TK_NUM)
   char *str;       // string
   Token *next;     // next pointer
+};
+
+struct Node{
+  NodeKind kind;  // type of node
+  Node *lhs;      // left-hand side
+  Node *rhs;      // right-hand side
+  int val;        // use when kind is ND_NUM
 };
 
 // input
@@ -37,7 +55,7 @@ void error_at(char *loc, char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
 
-  int pos=loc-user_input;
+  int pos = loc-user_input;
   fprintf(stderr, "%s\n", user_input);
   fprintf(stderr, "%*s", pos, ""); //print pos spaces
   fprintf(stderr, "^ ");
@@ -48,48 +66,48 @@ void error_at(char *loc, char *fmt, ...) {
 
 // read the current token and go next
 bool consume(char op){
-  if(token->kind!=TK_RESERVED || token->str[0]!=op) return false;
-  token=token->next;
+  if(token->kind != TK_RESERVED || token->str[0] != op) return false;
+  token = token->next;
   return true;
 }
 
 void expect(char op){
-  if(token->kind!=TK_RESERVED || token->str[0]!=op){
+  if(token->kind != TK_RESERVED || token->str[0] != op){
     error_at(token->str, "Expected '%c'", op);
   }
-  token=token->next;
+  token = token->next;
 }
 
 int expect_number(){
-  if(token->kind!=TK_NUM){
+  if(token->kind != TK_NUM){
     error_at(token->str, "Expected a number.");
   }
-  int val=token->val;
-  token=token->next;
+  int val = token->val;
+  token = token->next;
   return val;
 }
 
 bool at_eof(){
-  return token->kind==TK_EOF;
+  return token->kind == TK_EOF;
 }
 
 // allocate token and connect to cur
 Token *new_token(TokenKind kind, Token *cur, char *str){
   // calloc initialize memory by 0
-  Token *tok =calloc(1,sizeof(Token));
-  tok->kind=kind;
-  tok->str=str;
-  cur->next=tok;
+  Token *tok = calloc(1,sizeof(Token));
+  tok->kind = kind;
+  tok->str = str;
+  cur->next = tok;
   return tok;
 }
 
 // tokenize p
 // space -> +,- -> number
 Token *tokenize(){
-  char *p=user_input;
+  char *p = user_input;
   Token head;
-  head.next=NULL;
-  Token *cur=&head;
+  head.next = NULL;
+  Token *cur = &head;
 
   while(*p){
     // space -> skip
@@ -97,30 +115,85 @@ Token *tokenize(){
       p++;
       continue;
     }
-    if(*p=='+' || *p=='-'){
-      cur=new_token(TK_RESERVED, cur, p++);
+    if(*p == '+' || *p == '-'){
+      cur = new_token(TK_RESERVED, cur, p++);
       continue;
     }
     if(isdigit(*p)){
-      cur=new_token(TK_NUM, cur,p);
-      cur->val=strtol(p,&p,10);
+      cur = new_token(TK_NUM, cur,p);
+      cur->val = strtol(p, &p, 10);
       continue;
     }
     error_at(p, "Expected a number");
   }
 
-  new_token(TK_EOF,cur,p);
+  new_token(TK_EOF, cur, p);
   return head.next;
 }
 
+// make new node
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs){
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = kind;
+  node->lhs = lhs;
+  node->rhs = rhs;
+  return node;
+}
+
+// make new number node
+Node *new_node_num(int val){
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_NUM;
+  node->val = val;
+  return node;
+}
+
+// production rule by BNF
+// (nodes are divided into number and others)
+// expr ::= mul ( "+" mul | "-" mul )*
+// mul ::= primary ( "*" primary | "/" primary )*
+// primary ::= num | "(" expr ")"
+// implemented by recursive descent parsing (LL(1) parser)
+
+Node *expr(){
+  Node *node = mul();
+  while(1){
+    if(consume('+')) node = new_node(ND_ADD, node, mul());
+    else if(consume('-')) node = new_node(ND_SUB, node, mul());
+    else return node;
+  }
+}
+
+Node *mul(){
+  Node *node = primary();
+  while(1){
+    if(consume('*')) node = new_node(ND_MUL, node, primary());
+    else if(consume('/')) node = new_node(ND_DIV, node, primary());
+    else return node;
+  }
+}
+
+Node *primary(){
+  // if next token is "(", primary must be going to be "(" expr ")"
+  if(consume('(')){
+    Node *node = expr();
+    expect(')');
+    return node;
+  }
+
+  // if not so, token must be going to be a number
+  return new_node_num(expect_number());
+}
+
+
 int main(int argc, char ** argv){
-  if(argc!= 2){
-    fprintf(stderr,"Invalid number of arguments\n");
+  if(argc != 2){
+    fprintf(stderr, "Invalid number of arguments\n");
     return 1;
   }
 
-  user_input=argv[1];
-  token=tokenize();
+  user_input = argv[1];
+  token = tokenize();
 
   printf(".intel_syntax noprefix\n");
   printf(".global main \n");
