@@ -11,7 +11,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len){
   return tok;
 }
 
-bool startswith(char *p, char *q) {
+bool multicmp(char *p, char *q) {
   return memcmp(p, q, strlen(q)) == 0;
 }
 
@@ -30,8 +30,8 @@ Token *tokenize(char *p){
     }
 
     // multi-letter punctuator
-    if (startswith(p, "==") || startswith(p, "!=") ||
-        startswith(p, "<=") || startswith(p, ">=")) {
+    if (multicmp(p, "==") || multicmp(p, "!=") ||
+        multicmp(p, "<=") || multicmp(p, ">=")) {
       cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;
       continue;

@@ -47,6 +47,7 @@ struct Node{
   int val;        // use when kind is ND_NUM
 };
 
+//// global variables
 // input
 char *user_input;
 // token
@@ -60,10 +61,9 @@ void expect(char *op);
 int expect_number();
 bool at_eof();
 
-
 //// tokenizer
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
-bool startswith(char *p, char *q);
+bool multicmp(char *p, char *q);
 Token *tokenize(char *p);
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
