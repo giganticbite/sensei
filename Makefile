@@ -1,6 +1,11 @@
 CFLAGS=-std=c11 -g -static
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
 
-sensei: sensei.c
+sensei: $(OBJS)
+		$(CC) -o sensei $(OBJS) $(LDFLAGS)
+
+$(OBJS): sensei.h
 
 test: sensei
 	./test.sh

@@ -29,5 +29,6 @@ assert 0 '25 <= 20'
 assert 0 '25 < 20'
 assert 1 '25 > 20'
 assert 1 '(25 != 20)'
+assert 1 '(100)==(99+1)'
 
 echo OK
