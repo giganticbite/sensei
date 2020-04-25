@@ -189,7 +189,36 @@ Node *primary(){
   return new_node_num(expect_number());
 }
 
+void gen(Node *node){
+  if(node->kind==ND_NUM){
+    printf("   push %d\n");
+    return;
+  }
 
+  gen(node->lhs);
+  gen(node->rhs);
+
+  printf("   pop rdi\n");
+  printf("   pop rax\n");
+
+  switch(node->kind){
+    case ND_ADD:
+    printf("   add rax, rdi\n");
+    break;
+    case ND_SUB:
+    printf("   aub rax, rdi\n");
+    break;
+    case ND_MUL:
+    printf("   imul rax, rdi\n");
+    break;
+    case ND_DIV:
+    printf("   cqo\n"); // extend rax(64bit to 128bit) 
+    printf("   idiv rdi\n"); // take div of rax and rdx(quotient->rax, remainder->rdx)
+    break;
+  }
+  push("   push rax\n");
+
+}
 int main(int argc, char ** argv){
   if(argc != 2){
     fprintf(stderr, "Invalid number of arguments\n");
