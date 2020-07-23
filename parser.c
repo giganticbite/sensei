@@ -2,18 +2,33 @@
 
 // production rule by BNF
 // (nodes are divided into number and others)
-// expr       = equality
+// program    = stmt*
+// stmt       = expr ";"
+// expr       = assign
+// assign     = equality ("=" assign)?
 // equality   = relational ("==" relational | "!=" relational)*
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 // add        = mul ("+" mul | "-" mul)*
 // mul        = unary ("*" unary | "/" unary)*
 // unary      = ("+" | "-")? primary
-// primary    = num | "(" expr ")"
+// primary    = num | ident | "(" expr ")"
 // implemented by recursive descent parsing (LL(1) parser)
+Node *code[100];
+
+Node *assign(){
+  Node *node = equality();
+  if(consume("=")) node = new_node(ND_ASSIGN,node,assign());
+  return node;
+}
 
 Node *expr(){
-  Node *node = equality();
-  return node;
+  return assign();
+}
+
+Node *stmt(){
+  Node *node = expr();
+  expect(";");
+  return node; 
 }
 
 Node *equality(){
@@ -71,6 +86,21 @@ Node *primary(){
     return node;
   }
 
+  // or local variable (only 1char)
+  Token *tok = consume_ident(); 
+  if(tok){
+    Node *node = calloc(1,sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] -'a' + 1) * 8;
+    return node;
+  }
+
   // if not so, token must be going to be a number
   return new_node_num(expect_number());
+}
+
+void program(){
+  int i = 0;
+  while(!at_eof())code[i++] = stmt;
+  code[i] = NULL;
 }

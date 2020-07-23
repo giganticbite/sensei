@@ -43,6 +43,13 @@ Token *tokenize(char *p){
       continue;
     }
 
+    // one character variable
+    if('a' <= *p && *p <= 'z'){
+      cur = new_token(TK_IDENT, cur, p++);
+      cur->len = 1;
+      continue;
+    }
+
     // integer
     if (isdigit(*p)) {
       cur = new_token(TK_NUM, cur, p, 0);

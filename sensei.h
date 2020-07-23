@@ -11,9 +11,10 @@
 
 // type of token
 typedef enum{
-  TK_RESERVED, // reseved token
-  TK_NUM, // number
-  TK_EOF, // end of token
+  TK_RESERVED,  // reseved token
+  TK_IDENT,     // identifier
+  TK_NUM,       // number
+  TK_EOF,       // end of token
 } TokenKind;
 
 //type of node
@@ -27,17 +28,19 @@ typedef enum{
   ND_NEQ,   // !=
   ND_LTM,   // < (less-than mark)
   ND_LTQ,   // <=
+  ND_ASSIGN,// =
+  ND_LVAR,  // local variable
 } NodeKind;
 
 typedef struct Token Token;
 typedef struct Node Node;
 
 struct Token{
-  TokenKind kind; // type of token
-  int val;         // number (kind == TK_NUM)
+  TokenKind kind;   // type of token
+  int val;          // number (kind == TK_NUM)
   int len;          // length of string (number will be 0)
-  char *str;       // string
-  Token *next;     // next pointer
+  char *str;        // string
+  Token *next;      // next pointer
 };
 
 struct Node{
@@ -45,6 +48,7 @@ struct Node{
   Node *lhs;      // left-hand side
   Node *rhs;      // right-hand side
   int val;        // use when kind is ND_NUM
+  int offset;     // use when kind is ND_LVAR (this indicates offset from base pointer)
 };
 
 //// global variables
@@ -57,6 +61,7 @@ Token *token;
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
+Token *consume_ident();
 void expect(char *op);
 int expect_number();
 bool at_eof();

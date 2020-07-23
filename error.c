@@ -21,13 +21,20 @@ void error_at(char *loc, char *fmt, ...) {
   exit(1);
 }
 
-// read the current token and go next
+// read the current token and go to next
 bool consume(char *op){
   if(token->kind != TK_RESERVED
   || strlen(op) != token->len
   || memcmp(token->str, op, token->len)) return false;
   token = token->next;
   return true;
+}
+
+Token *consume_ident(){
+  if(token->kind != TK_IDENT) return NULL;
+  Token *t = token;
+  token = token->next;
+  return t;
 }
 
 void expect(char *op){
